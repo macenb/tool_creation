@@ -5,6 +5,28 @@ sudo_group=""
 ccdc_users=( "ccdcuser1" "ccdcuser2" )
 debug="false"
 
+function get_input_string {
+    read -r -p "$1" input
+    echo "$input"
+}
+
+function get_input_list {
+    local input_list=()
+
+    while [ "$continue" != "false" ]; do
+        input=$(get_input_string "Enter input: (one entry per line; hit enter to continue): ")
+        if [ "$input" == "" ]; then
+            continue="false"
+        else
+            input_list+=("$input")
+        fi
+    done
+
+    # Return the list by printing it
+    # Note: Bash functions can't return arrays directly, but we can print them
+    echo "${input_list[@]}"
+}
+
 
 function detect_system_info {
     print_banner "Detecting system info"
