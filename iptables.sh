@@ -99,15 +99,15 @@ function setup_iptables {
     # sudo iptables -A OUTPUT -o lo -j ACCEPT
     # sudo iptables -A OUTPUT -p tcp -m multiport --dport 80,443 -m set ! --match-set PRIVATE-IP dst -j ACCEPT
     # Web traffic
-    sudo iptables -A OUTPUT -p tcp -m multiport --dport 80,443 -j WEB
     sudo iptables -N WEB
+    sudo iptables -A OUTPUT -p tcp -m multiport --dport 80,443 -j WEB
     sudo iptables -A WEB -d 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16 -j LOG --log-prefix "[iptables] WEB/private ip "
     sudo iptables -A WEB -j ACCEPT
     # DNS traffic
     sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 
     echo "[*] Saving rules"
-    sudo iptables-save | sudo tee $SAVE
+    # sudo iptables-save | sudo tee $SAVE
 }
 
 detect_system_info
