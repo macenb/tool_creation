@@ -109,3 +109,5 @@ function setup_iptables {
     echo "[*] Saving rules"
     sudo iptables-save | sudo tee $SAVE
 }
+
+detect_system_info
