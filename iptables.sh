@@ -111,3 +111,4 @@ function setup_iptables {
 }
 
 detect_system_info
+setup_iptables
