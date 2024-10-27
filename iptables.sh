@@ -106,14 +106,22 @@ function setup_iptables {
     sudo iptables -A INPUT -i lo -j ACCEPT
     sudo iptables -A INPUT -s 0.0.0.0/0 -j ACCEPT
 
-    echo "[*] Which ports should be open for incoming traffic (INPUT)?"
+    echo "[*] Which tcp ports should be open for incoming traffic (INPUT)?"
     echo "[*] Warning: Do NOT forget to add 22/SSH if needed- please don't accidentally lock yourself out of the system!"
     ports=$(get_input_list)
     for port in $ports; do
-        sudo iptables -A INPUT --dport "$port" -j ACCEPT
+        sudo iptables -A INPUT -p tcp --dport "$port" -j LOG --log-prefix "[iptables INPUT] traffic on port $port allowed: " --log-level 1
+        sudo iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
+    done
+    echo "[*] Which udp ports should be open for incoming traffic (INPUT)?"
+    echo "[*] Warning: Do NOT forget to add 22/SSH if needed- please don't accidentally lock yourself out of the system!"
+    ports=$(get_input_list)
+    for port in $ports; do
+        sudo iptables -A INPUT -p udp --dport "$port" -j LOG --log-prefix "[iptables INPUT] traffic on port $port allowed: " --log-level 1
+        sudo iptables -A INPUT -p udp --dport "$port" -j ACCEPT
     done
     # TODO: is there a better alternative to this rule?
-    sudo iptables -A INPUT -j LOG --log-prefix "[iptables] CHAIN=INPUT ACTION=DROP "
+    # sudo iptables -A INPUT -j LOG --log-prefix "[iptables] CHAIN=INPUT ACTION=DROP "
 
     echo "[*] Creating OUTPUT rules"
     # TODO: harden this as much as possible, like by limiting destination hosts
