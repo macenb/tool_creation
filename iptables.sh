@@ -75,6 +75,7 @@ function detect_system_info {
     fi
 }
 
+# currently defining for Ubuntu, will need changes for other distros
 function setup_iptables {
     # TODO: this needs work/testing on different distros
     print_banner "Configuring iptables"
@@ -100,24 +101,29 @@ function setup_iptables {
     # sudo ipset save | sudo tee /etc/ipset.conf
     # sudo systemctl enable ipset
 
+    echo "[*] defining logging rules"
+    sudo touch /etc/rsyslog.d/10-iptables.conf
+    echo ':msg, contains, "iptables" -/var/log/iptables.log' > /etc/rsyslog.d/10-iptables.conf
+    echo "& ~" >> /etc/rsyslog.d/10-iptables.conf
+    sudo systemctl restart rsyslog
+
     echo "[*] Creating INPUT rules"
     sudo iptables -P INPUT DROP
     sudo iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-    sudo iptables -A INPUT -i lo -j ACCEPT
-    sudo iptables -A INPUT -s 0.0.0.0/0 -j ACCEPT
+    # sudo iptables -A INPUT -i lo -j ACCEPT
+    # sudo iptables -A INPUT -s 0.0.0.0/0 -j ACCEPT
 
-    echo "[*] Which tcp ports should be open for incoming traffic (INPUT)?"
+    echo "[*] Which *TCP* ports should be open for incoming traffic (INPUT)?"
     echo "[*] Warning: Do NOT forget to add 22/SSH if needed- please don't accidentally lock yourself out of the system!"
     ports=$(get_input_list)
     for port in $ports; do
         sudo iptables -A INPUT -p tcp --dport "$port" -j LOG --log-prefix "[iptables INPUT] traffic on port $port allowed: " --log-level 1
         sudo iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
     done
-    echo "[*] Which udp ports should be open for incoming traffic (INPUT)?"
-    echo "[*] Warning: Do NOT forget to add 22/SSH if needed- please don't accidentally lock yourself out of the system!"
+    echo "[*] Which *UDP* ports should be open for incoming traffic (INPUT)?"
     ports=$(get_input_list)
     for port in $ports; do
-        sudo iptables -A INPUT -p udp --dport "$port" -j LOG --log-prefix "[iptables INPUT] traffic on port $port allowed: " --log-level 1
+        sudo iptables -A INPUT -p udp --dport "$port" -j LOG --log-prefix "[iptables] INPUT traffic on port $port allowed: " --log-level 1
         sudo iptables -A INPUT -p udp --dport "$port" -j ACCEPT
     done
     # TODO: is there a better alternative to this rule?
