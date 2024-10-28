@@ -84,11 +84,11 @@ while true; do
     done
 done
 
-echo "[*] Configuring rules for the internal network"
-sudo iptables -t nat -A PREROUTING -d "$internal_subnet.0/24" -j ACCEPT
+# echo "[*] Configuring rules for the internal network"
+# sudo iptables -t nat -A PREROUTING -d "$internal_subnet.0/24" -j ACCEPT
 
 echo "[*] Configuring logging and the netmap"
 sudo iptables -t nat -A PREROUTING -d "$external_subnet.0/24" -j LOG --log-prefix "[iptables] ALLOWED TRAFFIC : " --log-level 1
 sudo iptables -t nat -A PREROUTING -d "$external_subnet.0/24" -j NETMAP --to "$internal_subnet.0/24"
 sudo iptables -t nat -A POSTROUTING -s "$internal_subnet.0/24" -j NETMAP --to "$external_subnet.0/24"
-sudo iptables -t nat -A POSTROUTING -o "$external_interface" -j MASQUERADE
+# sudo iptables -t nat -A POSTROUTING -o "$external_interface" -j MASQUERADE
