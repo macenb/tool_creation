@@ -103,8 +103,11 @@ function setup_iptables {
 
     echo "[*] defining logging rules"
     sudo touch /etc/rsyslog.d/10-iptables.conf
-    echo ':msg, contains, "iptables" -/var/log/iptables.log' > /etc/rsyslog.d/10-iptables.conf
-    echo "& ~" >> /etc/rsyslog.d/10-iptables.conf
+    touch ~/config
+    echo ':msg, contains, "iptables" -/var/log/iptables.log' > ~/config
+    echo "& ~" >> ~/config
+    sudo cp ~/config /etc/rsyslog.d/10-iptables.conf
+    rm ~/config
     sudo systemctl restart rsyslog
 
     echo "[*] Creating INPUT rules"
