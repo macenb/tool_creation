@@ -1,8 +1,8 @@
 # I'm building this for wrccdc router configuration automation. Should be fun
 
-$external_subnet=''
-$internal_subnet=''
-$external_interface=''
+external_subnet=''
+internal_subnet=''
+external_interface=''
 
 function print_banner {
     echo
