@@ -5,6 +5,16 @@ sudo_group=""
 ccdc_users=( "ccdcuser1" "ccdcuser2" )
 debug="false"
 
+function print_banner {
+    echo
+    echo "#######################################"
+    echo "#"
+    echo "#   $1"
+    echo "#"
+    echo "#######################################"
+    echo
+}
+
 function get_input_string {
     read -r -p "$1" input
     echo "$input"
@@ -81,11 +91,11 @@ function setup_iptables {
     print_banner "Configuring iptables"
     echo "[*] Installing iptables packages"
 
-    if [ "$pm" == 'apt' ]; then
+    if [ "$pm" == 'apt-get' ]; then
         # Debian and Ubuntu
         sudo "$pm" install -y iptables iptables-persistent #ipset
         SAVE='/etc/iptables/rules.v4'
-    else
+    elif [ "$pm" == 'dnf']
         # Fedora
         sudo "$pm" install -y iptables-services
         sudo systemctl enable iptables
@@ -116,6 +126,7 @@ function setup_iptables {
     # sudo iptables -A INPUT -i lo -j ACCEPT
     # sudo iptables -A INPUT -s 0.0.0.0/0 -j ACCEPT
 
+    # TODO: maybe add another allowance to the ssh rule that it can only be from internal machines? figure out actual requirements
     echo "[*] Which *TCP* ports should be open for incoming traffic (INPUT)?"
     echo "[*] Warning: Do NOT forget to add 22/SSH if needed- please don't accidentally lock yourself out of the system!"
     ports=$(get_input_list)
@@ -129,21 +140,24 @@ function setup_iptables {
         sudo iptables -A INPUT -p udp --dport "$port" -j LOG --log-prefix "[iptables] INPUT traffic on port $port allowed: " --log-level 1
         sudo iptables -A INPUT -p udp --dport "$port" -j ACCEPT
     done
-    # TODO: is there a better alternative to this rule?
-    # sudo iptables -A INPUT -j LOG --log-prefix "[iptables] CHAIN=INPUT ACTION=DROP "
+    # This will log dropped traffic. May be useful for enumerating attacking ip addresses???
+    sudo iptables -A INPUT -j LOG --log-prefix "[iptables] CHAIN=INPUT ACTION=DROP "
 
     echo "[*] Creating OUTPUT rules"
-    # TODO: harden this as much as possible, like by limiting destination hosts
+    # TODO: how to harden output?
     # sudo iptables -P OUTPUT DROP
     # sudo iptables -A OUTPUT -o lo -j ACCEPT
     # sudo iptables -A OUTPUT -p tcp -m multiport --dport 80,443 -m set ! --match-set PRIVATE-IP dst -j ACCEPT
     # Web traffic
     sudo iptables -N WEB
     sudo iptables -A OUTPUT -p tcp -m multiport --dport 80,443 -j WEB
-    sudo iptables -A WEB -d 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16 -j LOG --log-prefix "[iptables] WEB/private ip "
+    sudo iptables -A WEB -d 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16 -j LOG --log-prefix "[iptables] OUTPUT WEB/private ip "
     sudo iptables -A WEB -j ACCEPT
     # DNS traffic
+    sudo iptables -A OUTPUT -p udp --dport 53 -j LOG --log-prefix "[iptables] OUTPUT DNS traffic : " --log-level 1
     sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+    # other allowances
+    sudo iptables -A OUTPUT -p icmp -j ACCEPT
 
     echo "[*] Saving rules"
     # sudo iptables-save | sudo tee $SAVE
