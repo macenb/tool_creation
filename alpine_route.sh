@@ -67,7 +67,10 @@ external_interface=$(get_input_string "What is the name of the external (WAN) ne
 
 echo "[*] Configuring per-user NAT / firewall rules"
 while true; do
-    ip_addr=$(get_input_string "Enter the last octet of an internal ip address for NAT rules: (Format: 10) ")
+    ip_addr=$(get_input_string "Enter the last octet of an internal ip address for NAT rules or 0 to quit: (Format: 10) ")
+    if [ "$ip_addr" == '0' ]; then
+        break
+    fi
     sudo iptables -t nat -I PREROUTING -d "$external_subnet.$ip_addr" -j RETURN
     echo "[*] Which *TCP* ports should be open for incoming traffic (INPUT)?"
     ports=$(get_input_list)
