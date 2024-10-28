@@ -36,6 +36,13 @@ function get_input_list {
     echo "${input_list[@]}"
 }
 
+# check if installed and install if not yet installed
+sudo which iptables &> /dev/null
+iptables=$?
+if [ $iptables != 0 ]; then
+    sudo apk add iptables
+fi
+
 echo "[*] Saving previous config to the file: ~/old.cnf"
 sudo iptables-save > ~/old.cnf
 
