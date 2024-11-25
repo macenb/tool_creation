@@ -96,11 +96,18 @@ function setup_iptables {
         sudo "$pm" install -y iptables iptables-persistent #ipset
         SAVE='/etc/iptables/rules.v4'
     elif [ "$pm" == 'dnf']
+    elif [ "$pm" == 'dnf' ]; then
         # Fedora
         sudo "$pm" install -y iptables-services
         sudo systemctl enable iptables
         sudo systemctl start iptables
         SAVE='/etc/sysconfig/iptables'
+    elif [ "$pm" == 'zypper' ]; then
+        # OpenSUSE
+        sudo zypper install iptables
+        sudo systemctl enable iptables
+        sudo systemctl start iptables
+        SAVE='/etc/iptables/iptables.rules'
     fi
 
     # echo "[*] Creating private ip range ipset"
@@ -132,12 +139,14 @@ function setup_iptables {
     ports=$(get_input_list)
     for port in $ports; do
         sudo iptables -A INPUT -p tcp --dport "$port" -j LOG --log-prefix "[iptables INPUT] traffic on port $port allowed: " --log-level 1
+        sudo iptables -A INPUT -p tcp --dport "$port" -j LOG --log-prefix "[iptables] CHAIN=INPUT ACTION=ACCEPT " --log-level 1
         sudo iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
     done
     echo "[*] Which *UDP* ports should be open for incoming traffic (INPUT)?"
     ports=$(get_input_list)
     for port in $ports; do
         sudo iptables -A INPUT -p udp --dport "$port" -j LOG --log-prefix "[iptables] INPUT traffic on port $port allowed: " --log-level 1
+        sudo iptables -A INPUT -p udp --dport "$port" -j LOG --log-prefix "[iptables] CHAIN=INPUT ACTION=ACCEPT " --log-level 1
         sudo iptables -A INPUT -p udp --dport "$port" -j ACCEPT
     done
     # This will log dropped traffic. May be useful for enumerating attacking ip addresses???
@@ -152,9 +161,11 @@ function setup_iptables {
     sudo iptables -N WEB
     sudo iptables -A OUTPUT -p tcp -m multiport --dport 80,443 -j WEB
     sudo iptables -A WEB -d 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16 -j LOG --log-prefix "[iptables] OUTPUT WEB/private ip "
+    sudo iptables -A WEB -d 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16 -j LOG --log-prefix "[iptables] CHAIN=OUTPUT ACTION=ACCEPT "
     sudo iptables -A WEB -j ACCEPT
     # DNS traffic
     sudo iptables -A OUTPUT -p udp --dport 53 -j LOG --log-prefix "[iptables] OUTPUT DNS traffic : " --log-level 1
+    sudo iptables -A OUTPUT -p udp --dport 53 -j LOG --log-prefix "[iptables] CHAIN=OUTPUT ACTION=ACCEPT " --log-level 1
     sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
     # other allowances
     sudo iptables -A OUTPUT -p icmp -j ACCEPT
